@@ -30,5 +30,10 @@ class IsoSpec extends FreeSpec {
       Entry.asTupleI.get(Entry("id", "0021")) shouldBe ("id", "0021")
       Entry.asTupleI.reverseGet(("id", "0021")) shouldBe Entry("id", "0021")
     }
+
+    "basic properties" in {
+      FamilyName.textI.reverseGet(FamilyName.textI.get(FamilyName("Smith"))) shouldBe FamilyName("Smith")
+      FamilyName.textI.get(FamilyName.textI.reverseGet("Smith")) shouldBe "Smith"
+    }
   }
 }
