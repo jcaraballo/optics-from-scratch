@@ -35,5 +35,12 @@ class IsoSpec extends FreeSpec {
       FamilyName.textI.reverseGet(FamilyName.textI.get(FamilyName("Smith"))) shouldBe FamilyName("Smith")
       FamilyName.textI.get(FamilyName.textI.reverseGet("Smith")) shouldBe "Smith"
     }
+
+    "modify" in {
+      val marriage: FamilyName => FamilyName = FamilyName.textI.modify(_ + "-Jones")
+
+      val name = FamilyName("Smith")
+      marriage(name) shouldBe FamilyName("Smith-Jones")
+    }
   }
 }
