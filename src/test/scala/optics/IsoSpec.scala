@@ -11,6 +11,14 @@ object FamilyName {
   }
 }
 
+case class Person(familyName: FamilyName)
+object Person {
+  val familyNameI: Iso[Person, FamilyName] = new Iso[Person, FamilyName]{
+    override def get: (Person) => FamilyName = _.familyName
+    override def reverseGet: (FamilyName) => Person = Person.apply
+  }
+}
+
 case class Entry(name: String, value: String)
 object Entry {
   val asTupleI: Iso[Entry, (String, String)] = new Iso[Entry, (String, String)] {
@@ -48,6 +56,16 @@ class IsoSpec extends FreeSpec {
 
       val name = FamilyName("Smith")
       marriage(name) shouldBe FamilyName("Jones")
+    }
+
+    "iso compose iso => iso" in {
+      val composed: Iso[Person, String] = Person.familyNameI compose FamilyName.textI
+
+      val person = Person(FamilyName("Smith"))
+      composed.set("Jones")(person) shouldBe Person(FamilyName("Jones"))
+
+      // as a comparison, how to do the same using each level's copy method
+      person.copy(familyName = person.familyName.copy(text = "Jones")) shouldBe Person(FamilyName("Jones"))
     }
   }
 }
