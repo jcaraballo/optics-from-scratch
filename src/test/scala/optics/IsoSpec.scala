@@ -42,5 +42,12 @@ class IsoSpec extends FreeSpec {
       val name = FamilyName("Smith")
       marriage(name) shouldBe FamilyName("Smith-Jones")
     }
+
+    "set" in {
+      val marriage: FamilyName => FamilyName = FamilyName.textI.set("Jones")
+
+      val name = FamilyName("Smith")
+      marriage(name) shouldBe FamilyName("Jones")
+    }
   }
 }
