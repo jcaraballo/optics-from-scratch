@@ -5,26 +5,18 @@ import org.scalatest.Matchers._
 
 case class FamilyName(text: String)
 object FamilyName {
-  val textI: Iso[FamilyName, String] = new Iso[FamilyName, String]{
-    override def get: (FamilyName) => String = _.text
-    override def reverseGet: (String) => FamilyName = FamilyName.apply
-  }
+  val textI: Iso[FamilyName, String] = Iso[FamilyName, String](_.text)(FamilyName.apply)
 }
 
 case class Person(familyName: FamilyName)
 object Person {
-  val familyNameI: Iso[Person, FamilyName] = new Iso[Person, FamilyName]{
-    override def get: (Person) => FamilyName = _.familyName
-    override def reverseGet: (FamilyName) => Person = Person.apply
-  }
+  val familyNameI: Iso[Person, FamilyName] = Iso[Person, FamilyName](_.familyName)(Person.apply)
 }
 
 case class Entry(name: String, value: String)
 object Entry {
-  val asTupleI: Iso[Entry, (String, String)] = new Iso[Entry, (String, String)] {
-    override def get: (Entry) => (String, String) = e => (e.name, e.value)
-    override def reverseGet: ((String, String)) => Entry = {case (n, v) => Entry(n, v)}
-  }
+  val asTupleI: Iso[Entry, (String, String)] =
+    Iso[Entry, (String, String)](e => (e.name, e.value)){case (n, v) => Entry(n, v)}
 }
 
 class IsoSpec extends FreeSpec {

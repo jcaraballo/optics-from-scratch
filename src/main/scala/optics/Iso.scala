@@ -8,8 +8,13 @@ trait Iso[S, A] {
   def set(a: A): S => S = modify(_ => a)
 
   def compose[B](other: Iso[A, B]): Iso[S, B] =
-    new Iso[S, B] {
-      override def get: (S) => B = Iso.this.get andThen other.get
-      override def reverseGet: (B) => S = other.reverseGet andThen Iso.this.reverseGet
+    Iso[S, B](this.get andThen other.get)(other.reverseGet andThen this.reverseGet)
+}
+
+object Iso {
+  def apply[S, A](getFunction: S => A)(reverseGetFunction: A => S): Iso[S, A] =
+    new Iso[S, A] {
+      override def get: S => A = getFunction
+      override def reverseGet: A => S = reverseGetFunction
     }
 }
