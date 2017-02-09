@@ -11,11 +11,24 @@ object FamilyName {
   }
 }
 
+case class Entry(name: String, value: String)
+object Entry {
+  val asTupleI: Iso[Entry, (String, String)] = new Iso[Entry, (String, String)] {
+    override def get: (Entry) => (String, String) = e => (e.name, e.value)
+    override def reverseGet: ((String, String)) => Entry = {case (n, v) => Entry(n, v)}
+  }
+}
+
 class IsoSpec extends FreeSpec {
   "Iso" - {
     "basic behaviour" in {
       FamilyName.textI.get(FamilyName("Smith")) shouldBe "Smith"
       FamilyName.textI.reverseGet("Smith") shouldBe FamilyName("Smith")
+    }
+
+    "tuple example" in {
+      Entry.asTupleI.get(Entry("id", "0021")) shouldBe ("id", "0021")
+      Entry.asTupleI.reverseGet(("id", "0021")) shouldBe Entry("id", "0021")
     }
   }
 }
