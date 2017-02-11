@@ -7,6 +7,9 @@ import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 case class EnterpriseAgileId(text: String)
+object EnterpriseAgileId {
+  val textI: Iso[EnterpriseAgileId, String] = Iso[EnterpriseAgileId, String](_.text)(EnterpriseAgileId.apply)
+}
 
 case class Story(title: String, id: Option[EnterpriseAgileId])
 object Story {
@@ -149,6 +152,13 @@ class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
       "properties" in {
         optionalSatisfiesProperties(composed)(pairGen, enterpriseAgileIdGen)
       }
+    }
+
+    "optional compose iso => optional" in {
+      val composed: Optional[Story, String] = Story.idO compose EnterpriseAgileId.textI
+      composed.set("jira-d1", Story("Do the thing", Some(EnterpriseAgileId("jira-d0")))) shouldBe Story("Do the thing", Some(EnterpriseAgileId("jira-d1")))
+
+      optionalSatisfiesProperties(composed)(storyGen, arbitrary[String])
     }
   }
 }

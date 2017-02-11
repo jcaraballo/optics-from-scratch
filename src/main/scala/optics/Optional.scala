@@ -10,6 +10,8 @@ trait Optional[S, A] {
   def compose[B](other: Optional[A, B]): Optional[S, B] = Optional[S, B](s => this.getOption(s).flatMap(other.getOption)){(b, s) =>
     this.getOption(s).map(a => this.set(other.set(b, a), s)).getOrElse(s)
   }
+  def compose[B](other: Iso[A, B]): Optional[S, B] =
+    Optional[S, B](s => this.getOption(s) map other.get)((b, s) => this.set(other.reverseGet(b), s))
 }
 
 object Optional {
