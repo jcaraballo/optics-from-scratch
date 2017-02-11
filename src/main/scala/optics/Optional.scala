@@ -5,6 +5,7 @@ trait Optional[S, A] {
   def set:  (A, S) => S
 
   def modifyOption(f: A => A): S => Option[S] = s => getOption(s).map(a => set(f(a), s))
+  def modify(f: A => A): S => S = s => modifyOption(f)(s).getOrElse(s)
 }
 
 object Optional {
