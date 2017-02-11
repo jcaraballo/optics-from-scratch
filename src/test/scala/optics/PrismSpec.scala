@@ -32,6 +32,8 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
     maybeNationality ← maybeNationalityGen
   } yield Accountant(maybeNationality)
 
+  private val makeGreatAgain: Nationality => Nationality = Nationality.textI.modify(_.toUpperCase)
+
   "Prism" - {
     "basics" - {
       "by example" in {
@@ -74,7 +76,7 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
     }
 
     "modify" in {
-      val makeAccountantsNationalityGreatAgain: Accountant => Accountant = Accountant.nationalityP.modify(n => n.copy(text = n.text.toUpperCase))
+      val makeAccountantsNationalityGreatAgain: Accountant => Accountant = Accountant.nationalityP.modify(makeGreatAgain)
 
       makeAccountantsNationalityGreatAgain(Accountant(Some(Nationality("Spanish")))) shouldBe Accountant(Some(Nationality("SPANISH")))
       makeAccountantsNationalityGreatAgain(Accountant(None)) shouldBe Accountant(None)
@@ -98,6 +100,13 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
           }
         }
       }
+    }
+
+    "modifyOption" in {
+      val maybeMakeAccountantsNationalityGreatAgain: Accountant => Option[Accountant] = Accountant.nationalityP.modifyOption(makeGreatAgain)
+
+      maybeMakeAccountantsNationalityGreatAgain(Accountant(Some(Nationality("Spanish")))) shouldBe Some(Accountant(Some(Nationality("SPANISH"))))
+      maybeMakeAccountantsNationalityGreatAgain(Accountant(None)) shouldBe None
     }
   }
 }

@@ -7,6 +7,7 @@ trait Prism[S, A] {
 
   def modify(f: A => A): S => S = s => getOption(s).map(f andThen reverseGet).getOrElse(s)
   def set(a: A): S => S = modify(_ => a)
+  def modifyOption(f: A => A): S => Option[S] = s => getOption(s).map(f andThen reverseGet)
 }
 
 object Prism {
