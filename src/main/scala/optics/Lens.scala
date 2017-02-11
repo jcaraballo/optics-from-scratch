@@ -3,6 +3,8 @@ package optics
 trait Lens[S, A] {
   def get: S => A
   def set: (A, S) => S
+
+  def modify(f: A => A): S => S = s => set(f(get(s)), s)
 }
 
 object Lens {

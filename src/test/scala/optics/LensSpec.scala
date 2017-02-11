@@ -59,5 +59,9 @@ class LensSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
         }
       }
     }
+
+    "modify" in {
+      firstL[String, String].modify(_.toUpperCase)(("foo", "")) shouldBe ("FOO", "")
+    }
   }
 }
