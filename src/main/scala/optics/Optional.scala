@@ -3,6 +3,8 @@ package optics
 trait Optional[S, A] {
   def getOption: S => Option[A]
   def set:  (A, S) => S
+
+  def modifyOption(f: A => A): S => Option[S] = s => getOption(s).map(a => set(f(a), s))
 }
 
 object Optional {

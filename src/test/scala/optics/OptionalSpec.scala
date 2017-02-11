@@ -80,5 +80,12 @@ class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
         }
       }
     }
+
+    "modifyOption" in {
+      val changeId = Story.idO.modifyOption(_ => eai2)
+
+      changeId(Story("Do the thing", Some(eai1))) shouldBe Some(Story("Do the thing", Some(eai2)))
+      changeId(Story("Refactor", None)) shouldBe None
+    }
   }
 }
