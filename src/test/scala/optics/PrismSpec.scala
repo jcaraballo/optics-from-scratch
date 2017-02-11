@@ -79,5 +79,25 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
       makeAccountantsNationalityGreatAgain(Accountant(Some(Nationality("Spanish")))) shouldBe Accountant(Some(Nationality("SPANISH")))
       makeAccountantsNationalityGreatAgain(Accountant(None)) shouldBe Accountant(None)
     }
+
+    "set" - {
+      "by example" in {
+        val becomeSwiss: Accountant => Accountant = Accountant.nationalityP.set(swiss)
+
+        becomeSwiss(Accountant(Some(british))) shouldBe Accountant(Some(swiss))
+        becomeSwiss(Accountant(None)) shouldBe Accountant(None)
+      }
+
+      "property based" in {
+        forAll(nationalityGen, accountantGen) { (newNationality, accountant) =>
+          val naturalise: Accountant => Accountant = Accountant.nationalityP.set(newNationality)
+
+          accountant match {
+            case Accountant(Some(_)) => naturalise(accountant) shouldBe Accountant(Some(newNationality))
+            case Accountant(None)    => naturalise(accountant) shouldBe accountant
+          }
+        }
+      }
+    }
   }
 }
