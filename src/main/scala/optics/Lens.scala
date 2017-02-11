@@ -5,6 +5,13 @@ trait Lens[S, A] {
   def set: (A, S) => S
 
   def modify(f: A => A): S => S = s => set(f(get(s)), s)
+
+  def compose[B](other: Lens[A, B]): Lens[S, B] =
+    Lens[S, B](this.get andThen other.get){(b, s) =>
+      val oldA = this.get(s)
+      val newA = other.set(b, oldA)
+      this.set(newA, s)
+    }
 }
 
 object Lens {

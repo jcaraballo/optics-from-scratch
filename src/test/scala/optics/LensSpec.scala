@@ -1,17 +1,34 @@
 package optics
 
+import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalacheck.Arbitrary.arbitrary
 
 case class EnglishSpanish(englishTerm: String, spanishTerm: String)
 object EnglishSpanish {
   val englishTermL: Lens[EnglishSpanish, String] =
     Lens[EnglishSpanish, String](_.englishTerm){case (et, es) => es.copy(englishTerm = et)}
+
+  val asTupleI: Iso[EnglishSpanish, (String, String)] =
+    Iso[EnglishSpanish, (String, String)](engEsp => (engEsp.englishTerm, engEsp.spanishTerm)) { case (eng, esp) =>
+      EnglishSpanish(eng, esp)
+    }
 }
 
 class LensSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
   def firstL[A, B]: Lens[(A, B), A] = Lens[(A, B), A](_._1) { case (s, (_, s2)) => (s, s2) }
+  def secondL[A, B]: Lens[(A, B), B] = Lens[(A, B), B](_._2) { case (s, (s1, _)) => (s1, s) }
+
+  private def lensSatisfiesProperties[S, A](lens: Lens[S, A])(sGen: Gen[S], aGen: Gen[A]): Unit = {
+    forAll(sGen) { s =>
+      lens.set(lens.get(s), s) shouldBe s
+    }
+    forAll(sGen, aGen) { (s, a) =>
+      lens.get(lens.set(a, s)) shouldBe a
+    }
+  }
 
   "Lens" - {
     "basics" - {
@@ -62,6 +79,16 @@ class LensSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
 
     "modify" in {
       firstL[String, String].modify(_.toUpperCase)(("foo", "")) shouldBe ("FOO", "")
+    }
+
+    "lens1 compose lens2" in {
+      val fstSnd: Lens[((String, Int), String), Int] = firstL[(String, Int), String] compose secondL[String, Int]
+
+      val dup = fstSnd.modify(_ * 2)
+
+      dup((("foo", 10), "bar")) shouldBe(("foo", 20), "bar")
+
+      lensSatisfiesProperties(fstSnd)(arbitrary[((String, Int), String)], arbitrary[Int])
     }
   }
 }
