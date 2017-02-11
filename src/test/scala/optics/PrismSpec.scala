@@ -146,5 +146,16 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
 
       prismSatisfiesProperties(composed)(companyGen, nationalityGen)
     }
+
+    "prism compose iso" in {
+      val composed: Prism[Accountant, String] = Accountant.nationalityP compose Nationality.textI
+
+      val makeAccountantGA: Accountant => Accountant = composed.modify(_.toUpperCase)
+
+      makeAccountantGA(Accountant(Some(Nationality("Spanish")))) shouldBe Accountant(Some(Nationality("SPANISH")))
+      makeAccountantGA(Accountant(None)) shouldBe Accountant(None)
+
+      prismSatisfiesProperties(composed)(accountantGen, arbitrary[String])
+    }
   }
 }

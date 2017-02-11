@@ -11,6 +11,8 @@ trait Prism[S, A] {
 
   def compose[B](other: Prism[A, B]): Prism[S, B] =
     Prism[S, B](s => this.getOption(s).flatMap(other.getOption))(other.reverseGet andThen this.reverseGet)
+  def compose[B](other: Iso[A, B]): Prism[S, B] =
+    Prism[S, B](s => getOption(s).map(other.get))(other.reverseGet andThen this.reverseGet)
 }
 
 object Prism {
