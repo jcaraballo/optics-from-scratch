@@ -4,6 +4,8 @@ package optics
 trait Prism[S, A] {
   def getOption: S => Option[A]
   def reverseGet: A => S
+
+  def modify(f: A => A): S => S = s => getOption(s).map(f andThen reverseGet).getOrElse(s)
 }
 
 object Prism {

@@ -1,6 +1,6 @@
 package optics
 
-import optics.Nationality.british
+import optics.Nationality.{british, swiss}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FreeSpec
@@ -12,6 +12,7 @@ object Nationality {
   val textI: Iso[Nationality, String] = Iso[Nationality, String](_.text)(Nationality.apply)
 
   val british = Nationality("British")
+  val swiss = Nationality("Swiss")
 }
 
 case class Accountant(nationality: Option[Nationality])
@@ -70,6 +71,13 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
           Accountant.nationalityP.getOption(Accountant.nationalityP.reverseGet(nationality)) shouldBe Some(nationality)
         }
       }
+    }
+
+    "modify" in {
+      val makeAccountantsNationalityGreatAgain: Accountant => Accountant = Accountant.nationalityP.modify(n => n.copy(text = n.text.toUpperCase))
+
+      makeAccountantsNationalityGreatAgain(Accountant(Some(Nationality("Spanish")))) shouldBe Accountant(Some(Nationality("SPANISH")))
+      makeAccountantsNationalityGreatAgain(Accountant(None)) shouldBe Accountant(None)
     }
   }
 }
