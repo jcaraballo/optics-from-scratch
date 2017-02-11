@@ -25,6 +25,11 @@ object Company {
   val accountantP: Prism[Company, Accountant] = Prism[Company, Accountant](_.accountant)(a => Company(Some(a)))
 }
 
+case class BusinessAccount(company: Company)
+object BusinessAccount {
+  val companyI: Iso[BusinessAccount, Company] = Iso[BusinessAccount, Company](_.company)(BusinessAccount.apply)
+}
+
 class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
 
   private val nationalityGen: Gen[Nationality] = for {
@@ -40,6 +45,10 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
   private val companyGen: Gen[Company] = for {
     maybeAccountant ← Gen.option(accountantGen)
   } yield Company(maybeAccountant)
+
+  private val businessAccountGen: Gen[BusinessAccount] = for {
+    company ← companyGen
+  } yield BusinessAccount(company)
 
   private val makeGreatAgain: Nationality => Nationality = Nationality.textI.modify(_.toUpperCase)
 
@@ -156,6 +165,20 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
       makeAccountantGA(Accountant(None)) shouldBe Accountant(None)
 
       prismSatisfiesProperties(composed)(accountantGen, arbitrary[String])
+    }
+
+    "iso compose prism" in {
+      val composed: Prism[BusinessAccount, Accountant] = BusinessAccount.companyI compose Company.accountantP
+
+      val smithAccountant = Accountant(Some(Nationality.british))
+      val ackermannAccountant = Accountant(Some(Nationality.swiss))
+
+      val changeAccountant: BusinessAccount => BusinessAccount = composed.set(ackermannAccountant)
+
+      changeAccountant(BusinessAccount(Company(Some(smithAccountant)))) shouldBe BusinessAccount(Company(Some(ackermannAccountant)))
+      changeAccountant(BusinessAccount(Company(None))) shouldBe BusinessAccount(Company(None))
+
+      prismSatisfiesProperties(composed)(businessAccountGen, accountantGen)
     }
   }
 }
