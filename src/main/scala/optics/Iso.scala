@@ -15,6 +15,8 @@ trait Iso[S, A] {
     Lens[S, B](this.get andThen other.get){ (b, s) =>
       this.reverseGet(other.set(b, this.get(s)))
     }
+  def compose[B](other: Optional[A, B]): Optional[S, B] =
+    Optional[S, B](this.get andThen other.getOption)((b, s) => this.reverseGet(other.set(b, this.get(s))))
 }
 
 object Iso {

@@ -16,6 +16,11 @@ object Story {
   val idO: Optional[Story, EnterpriseAgileId] = Optional[Story, EnterpriseAgileId](_.id){case (id, s) => s.copy(id = s.id.map(_ => id))}
 }
 
+case class Delivery(story: Story)
+object Delivery {
+  val storyI: Iso[Delivery, Story] = Iso[Delivery, Story](_.story)(Delivery.apply)
+}
+
 case class Pair(dev1: String, dev2: String, story: Option[Story])
 object Pair {
   val storyO: Optional[Pair, Story] = Optional[Pair, Story](_.story)((s, p) => p.copy(story = p.story.map(_ => s)))
@@ -34,6 +39,10 @@ class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
     title    ← arbitrary[String]
     maybeEAI ← maybeEnterpriseAgileIdGen
   } yield Story(title, maybeEAI)
+
+  private val deliveryGen: Gen[Delivery] = for {
+    story ← storyGen
+  } yield Delivery(story)
 
   private val pairGen: Gen[Pair] = for {
     dev1   ← arbitrary[String]
@@ -159,6 +168,14 @@ class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
       composed.set("jira-d1", Story("Do the thing", Some(EnterpriseAgileId("jira-d0")))) shouldBe Story("Do the thing", Some(EnterpriseAgileId("jira-d1")))
 
       optionalSatisfiesProperties(composed)(storyGen, arbitrary[String])
+    }
+
+    "iso compose optional => optional" in {
+      val composed: Optional[Delivery, EnterpriseAgileId] = Delivery.storyI compose Story.idO
+      val delivery = Delivery(Story("Do the thing", Some(EnterpriseAgileId("today-100"))))
+      composed.set(EnterpriseAgileId("now-100"), delivery) shouldBe Delivery(Story("Do the thing", Some(EnterpriseAgileId("now-100"))))
+
+      optionalSatisfiesProperties(composed)(deliveryGen, enterpriseAgileIdGen)
     }
   }
 }
