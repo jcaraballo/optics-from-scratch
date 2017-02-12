@@ -30,6 +30,11 @@ class LensSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
     }
   }
 
+  private val englishSpanishGen: Gen[EnglishSpanish] = for {
+    englishTerm ← arbitrary[String]
+    spanishTerm ← arbitrary[String]
+  } yield EnglishSpanish(englishTerm, spanishTerm)
+
   "Lens" - {
     "basics" - {
       "by example (EnglishSpanish)" in {
@@ -89,6 +94,16 @@ class LensSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
       dup((("foo", 10), "bar")) shouldBe(("foo", 20), "bar")
 
       lensSatisfiesProperties(fstSnd)(arbitrary[((String, Int), String)], arbitrary[Int])
+    }
+
+    "iso compose lens" - {
+      val composed: Lens[EnglishSpanish, String] = EnglishSpanish.asTupleI compose firstL[String, String]
+
+      val engSpa = EnglishSpanish(englishTerm = "Hello", spanishTerm = "ohtuporaqui")
+
+      composed.set("youagain?", engSpa) shouldBe EnglishSpanish("youagain?", "ohtuporaqui")
+
+      lensSatisfiesProperties(composed)(englishSpanishGen, arbitrary[String])
     }
   }
 }

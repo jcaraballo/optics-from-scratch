@@ -11,6 +11,10 @@ trait Iso[S, A] {
     Iso[S, B](this.get andThen other.get)(other.reverseGet andThen this.reverseGet)
   def compose[B](other: Prism[A, B]): Prism[S, B] =
     Prism[S, B](this.get andThen other.getOption)(other.reverseGet andThen this.reverseGet)
+  def compose[B](other: Lens[A, B]): Lens[S, B] =
+    Lens[S, B](this.get andThen other.get){ (b, s) =>
+      this.reverseGet(other.set(b, this.get(s)))
+    }
 }
 
 object Iso {
