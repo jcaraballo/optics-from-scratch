@@ -13,6 +13,11 @@ object Story {
   val idO: Optional[Story, EnterpriseAgileId] = Optional[Story, EnterpriseAgileId](_.id){case (id, s) => s.copy(id = s.id.map(_ => id))}
 }
 
+case class Pair(dev1: String, dev2: String, story: Option[Story])
+object Pair {
+  val storyO: Optional[Pair, Story] = Optional[Pair, Story](_.story)((s, p) => p.copy(story = p.story.map(_ => s)))
+}
+
 class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
   private val enterpriseAgileIdGen: Gen[EnterpriseAgileId] = for {
     s ← arbitrary[String]
@@ -26,6 +31,26 @@ class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
     title    ← arbitrary[String]
     maybeEAI ← maybeEnterpriseAgileIdGen
   } yield Story(title, maybeEAI)
+
+  private val pairGen: Gen[Pair] = for {
+    dev1   ← arbitrary[String]
+    dev2   ← arbitrary[String]
+    option ← arbitrary[Option[Unit]]
+    story  ← storyGen
+  } yield Pair(dev1, dev2, option.map(_ => story))
+
+  private def optionalSatisfiesProperties[S, A](optional: Optional[S, A])(sGen: Gen[S], aGen: Gen[A]): Unit = {
+    forAll(sGen){s =>
+      val maybeS = optional.getOption(s).map(optional.set(_, s))
+      // Note: according http://www.slideshare.net/JulienTruffaut/beyond-scala-lens it should be just
+      // maybeS.contains(s). However, I think we can also get a None when the original s's id is None
+      whenever(maybeS.isDefined){maybeS shouldBe Some(s)}
+    }
+    forAll(sGen, aGen){(s, a) =>
+      val maybeA: Option[A] = optional.getOption(optional.set(a, s))
+      whenever(maybeA.isDefined){maybeA shouldBe Some(a)}
+    }
+  }
 
   "optional" - {
     val eai1 = EnterpriseAgileId("jira-d1")
@@ -95,6 +120,35 @@ class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
 
       val refactoring = Story("Refactor", None)
       changeId(refactoring) shouldBe refactoring
+    }
+
+    "optional compose optional" - {
+      val composed: Optional[Pair, EnterpriseAgileId] = Pair.storyO compose Story.idO
+
+      "basics" - {
+        "example based" in {
+          composed.getOption(Pair("Bob", "Tom", Some(Story("Do the thing", Some(eai1))))) shouldBe Some(eai1)
+          composed.getOption(Pair("Bob", "Tom", Some(Story("Do the thing", None)))) shouldBe None
+          composed.getOption(Pair("Bob", "Tom", None)) shouldBe None
+          composed.set(eai2, Pair("Bob", "Tom", Some(Story("Do the thing", Some(eai1))))) shouldBe Pair("Bob", "Tom", Some(Story("Do the thing", Some(eai2))))
+          composed.set(eai2, Pair("Bob", "Tom", Some(Story("Do the thing", None)))) shouldBe Pair("Bob", "Tom", Some(Story("Do the thing", None)))
+          composed.set(eai2, Pair("Bob", "Tom", None)) shouldBe Pair("Bob", "Tom", None)
+        }
+
+        "property based" in {
+          forAll(pairGen){ (pair) =>
+            composed.getOption(pair) shouldBe pair.story.flatMap(_.id)
+          }
+
+          forAll(enterpriseAgileIdGen, pairGen) { (eai, pair) =>
+              composed.set(eai, pair) shouldBe pair.copy(story = pair.story.map(s => s.copy(id = s.id.map(_ => eai))))
+          }
+        }
+      }
+
+      "properties" in {
+        optionalSatisfiesProperties(composed)(pairGen, enterpriseAgileIdGen)
+      }
     }
   }
 }
