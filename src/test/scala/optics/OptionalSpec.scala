@@ -13,6 +13,7 @@ object EnterpriseAgileId {
 
 case class Story(title: String, id: Option[EnterpriseAgileId])
 object Story {
+  val titleL: Lens[Story, String] = Lens[Story, String](_.title)((t, s) => s.copy(title = t))
   val idO: Optional[Story, EnterpriseAgileId] = Optional[Story, EnterpriseAgileId](_.id){case (id, s) => s.copy(id = s.id.map(_ => id))}
 }
 
@@ -24,6 +25,11 @@ object Delivery {
 case class Pair(dev1: String, dev2: String, story: Option[Story])
 object Pair {
   val storyO: Optional[Pair, Story] = Optional[Pair, Story](_.story)((s, p) => p.copy(story = p.story.map(_ => s)))
+}
+
+case class BusinessNeed(work: Option[Story])
+object BusinessNeed {
+  val workP: Prism[BusinessNeed, Story] = Prism[BusinessNeed, Story](_.work)(story => BusinessNeed(Some(story)))
 }
 
 class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
@@ -50,6 +56,11 @@ class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
     option ← arbitrary[Option[Unit]]
     story  ← storyGen
   } yield Pair(dev1, dev2, option.map(_ => story))
+
+  private val businessNeedGen: Gen[BusinessNeed] = for {
+    story  ← storyGen
+    option ← arbitrary[Option[Unit]]
+  } yield BusinessNeed(option.map(_ => story))
 
   private def optionalSatisfiesProperties[S, A](optional: Optional[S, A])(sGen: Gen[S], aGen: Gen[A]): Unit = {
     forAll(sGen){s =>
@@ -176,6 +187,19 @@ class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
       composed.set(EnterpriseAgileId("now-100"), delivery) shouldBe Delivery(Story("Do the thing", Some(EnterpriseAgileId("now-100"))))
 
       optionalSatisfiesProperties(composed)(deliveryGen, enterpriseAgileIdGen)
+    }
+
+    "prism compose lens => optional" in {
+      val composed: Optional[BusinessNeed, String] = BusinessNeed.workP compose Story.titleL
+
+      composed.getOption(BusinessNeed(Some(Story("Make a web page", None)))) shouldBe Some("Make a web page")
+      composed.set(
+        "Stop global warming",
+        BusinessNeed(Some(Story("Make a web page", None)))
+      ) shouldBe BusinessNeed(Some(Story("Stop global warming", None)))
+      composed.set("Stop global warming", BusinessNeed(None)) shouldBe BusinessNeed(None)
+
+      optionalSatisfiesProperties(composed)(businessNeedGen, arbitrary[String])
     }
   }
 }

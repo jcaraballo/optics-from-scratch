@@ -13,6 +13,10 @@ trait Prism[S, A] {
     Prism[S, B](s => this.getOption(s).flatMap(other.getOption))(other.reverseGet andThen this.reverseGet)
   def compose[B](other: Iso[A, B]): Prism[S, B] =
     Prism[S, B](s => getOption(s).map(other.get))(other.reverseGet andThen this.reverseGet)
+  def compose[B](other: Lens[A, B]): Optional[S, B] =
+    Optional[S, B](s => this.getOption(s).map(other.get)){(b, s) =>
+      this.getOption(s).map(other.set(b, _)).map(this.reverseGet).getOrElse(s)
+    }
 }
 
 object Prism {
