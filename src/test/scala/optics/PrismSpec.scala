@@ -20,6 +20,11 @@ object Accountant {
   val nationalityP: Prism[Accountant, Nationality] = Prism[Accountant, Nationality](_.nationality)(n => Accountant(Some(n)))
 }
 
+case class Company(accountant: Option[Accountant])
+object Company {
+  val accountantP: Prism[Company, Accountant] = Prism[Company, Accountant](_.accountant)(a => Company(Some(a)))
+}
+
 class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
 
   private val nationalityGen: Gen[Nationality] = for {
@@ -32,7 +37,22 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
     maybeNationality ← maybeNationalityGen
   } yield Accountant(maybeNationality)
 
+  private val companyGen: Gen[Company] = for {
+    maybeAccountant ← Gen.option(accountantGen)
+  } yield Company(maybeAccountant)
+
   private val makeGreatAgain: Nationality => Nationality = Nationality.textI.modify(_.toUpperCase)
+
+  def prismSatisfiesProperties[S, A](prism: Prism[S, A])(sGen: Gen[S], aGen: Gen[A]): Unit = {
+    forAll(sGen){s =>
+      val left: Option[S] = prism.getOption(s).map(prism.reverseGet)
+      whenever(left.isDefined) {left shouldBe Some(s)}
+    }
+
+    forAll(aGen){ a =>
+      prism.getOption(prism.reverseGet(a)) shouldBe Some(a)
+    }
+  }
 
   "Prism" - {
     "basics" - {
@@ -107,6 +127,24 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
 
       maybeMakeAccountantsNationalityGreatAgain(Accountant(Some(Nationality("Spanish")))) shouldBe Some(Accountant(Some(Nationality("SPANISH"))))
       maybeMakeAccountantsNationalityGreatAgain(Accountant(None)) shouldBe None
+    }
+
+    "prism1 compose prism2" in {
+      val composed: Prism[Company, Nationality] = Company.accountantP compose Accountant.nationalityP
+
+      // modify
+      val makeCompanyGA: Company => Company = composed.modify(makeGreatAgain)
+      makeCompanyGA(Company(Some(Accountant(Some(Nationality("Spanish")))))) shouldBe Company(Some(Accountant(Some(Nationality("SPANISH")))))
+      makeCompanyGA(Company(Some(Accountant(None)))) shouldBe Company(Some(Accountant(None)))
+      makeCompanyGA(Company(None)) shouldBe Company(None)
+
+      // modifyOption
+      val maybeMakeCompanyGA: Company => Option[Company] = composed.modifyOption(makeGreatAgain)
+      maybeMakeCompanyGA(Company(Some(Accountant(Some(Nationality("Spanish")))))) shouldBe Some(Company(Some(Accountant(Some(Nationality("SPANISH"))))))
+      maybeMakeCompanyGA(Company(Some(Accountant(None)))) shouldBe None
+      maybeMakeCompanyGA(Company(None)) shouldBe None
+
+      prismSatisfiesProperties(composed)(companyGen, nationalityGen)
     }
   }
 }

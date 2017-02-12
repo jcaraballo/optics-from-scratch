@@ -8,6 +8,9 @@ trait Prism[S, A] {
   def modifyOption(f: A => A): S => Option[S] = s => getOption(s).map(f andThen reverseGet)
   def modify(f: A => A): S => S = s => modifyOption(f)(s).getOrElse(s)
   def set(a: A): S => S = modify(_ => a)
+
+  def compose[B](other: Prism[A, B]): Prism[S, B] =
+    Prism[S, B](s => this.getOption(s).flatMap(other.getOption))(other.reverseGet andThen this.reverseGet)
 }
 
 object Prism {
