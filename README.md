@@ -4,6 +4,7 @@ Optics training material to write
 * Prism
 * Lens
 * Optional
+* Traversal
 
 from scratch
 
