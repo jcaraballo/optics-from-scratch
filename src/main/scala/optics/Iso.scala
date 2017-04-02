@@ -17,6 +17,8 @@ trait Iso[S, A] {
     }
   def compose[B](other: Optional[A, B]): Optional[S, B] =
     Optional[S, B](this.get andThen other.getOption)((b, s) => this.reverseGet(other.set(b, this.get(s))))
+
+  def asPrism: Prism[S, A] = Prism[S, A](s => Some(get(s)))(reverseGet)
 }
 
 object Iso {

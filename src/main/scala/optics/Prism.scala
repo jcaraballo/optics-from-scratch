@@ -17,6 +17,12 @@ trait Prism[S, A] {
     Optional[S, B](s => this.getOption(s).map(other.get)){(b, s) =>
       this.getOption(s).map(other.set(b, _)).map(this.reverseGet).getOrElse(s)
     }
+
+  def belowOption: Prism[Option[S], Option[A]] =
+    Prism[Option[S], Option[A]]{
+      case Some(s) => getOption(s).map(Some.apply)
+      case None =>  Some(None)
+    }(_.map(reverseGet))
 }
 
 object Prism {

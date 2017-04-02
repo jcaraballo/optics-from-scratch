@@ -17,6 +17,7 @@ object Nationality {
 
 case class Accountant(nationality: Option[Nationality])
 object Accountant {
+  val nationalityI: Iso[Accountant, Option[Nationality]] = Iso[Accountant, Option[Nationality]](_.nationality)(Accountant.apply)
   val nationalityP: Prism[Accountant, Nationality] = Prism[Accountant, Nationality](_.nationality)(n => Accountant(Some(n)))
 }
 
@@ -179,6 +180,53 @@ class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
       changeAccountant(BusinessAccount(Company(None))) shouldBe BusinessAccount(Company(None))
 
       prismSatisfiesProperties(composed)(businessAccountGen, accountantGen)
+    }
+  }
+
+  "asPrism.below" - {
+    "Navigates from a parent into an optional attribute ones and beyond" in {
+      val bo: Prism[Option[Accountant], Option[Nationality]] = Accountant.nationalityP.belowOption
+
+      Accountant.nationalityP.getOption(Accountant(None)) shouldBe None
+      Accountant.nationalityP.getOption(Accountant(Some(british))) shouldBe Some(british)
+
+      bo.getOption(None) shouldBe Some(None)
+      bo.getOption(Some(Accountant(None))) shouldBe None
+      bo.getOption(Some(Accountant(Some(british)))) shouldBe Some(Some(british))
+
+      bo.reverseGet(None) shouldBe None
+      bo.reverseGet(Some(british)) shouldBe Some(Accountant(Some(british)))
+
+      val blankNationality = Nationality("")
+      val reverseNationality: Nationality => Nationality = {
+        case Nationality(t) => Nationality(t.reverse)
+      }
+      val blankOrReverseNationality: Option[Nationality] => Option[Nationality] = _.orElse(Some(blankNationality)).map(reverseNationality)
+      blankOrReverseNationality(None) shouldBe Some(blankNationality)
+
+      bo.modifyOption(blankOrReverseNationality)(Some(Accountant(Some(Nationality("Brit"))))) shouldBe Some(Some(Accountant(Some(Nationality("tirB")))))
+      bo.modifyOption(blankOrReverseNationality)(Some(Accountant(None))) shouldBe None
+      bo.modifyOption(blankOrReverseNationality)(None) shouldBe Some(Some(Accountant(Some(blankNationality))))
+
+      bo.modify(blankOrReverseNationality)(Some(Accountant(Some(Nationality("Brit"))))) shouldBe Some(Accountant(Some(Nationality("tirB"))))
+      bo.modify(blankOrReverseNationality)(Some(Accountant(None))) shouldBe Some(Accountant(None))
+      bo.modify(blankOrReverseNationality)(None) shouldBe Some(Accountant(Some(blankNationality)))
+
+
+      Nationality.textI.get(Nationality("British")) shouldBe "British"
+      Nationality.textI.reverseGet("British") shouldBe Nationality("British")
+
+      // iso.asPrism.getOption(...) should always return Some(...) -- TODO make some laaaaawws
+      Nationality.textI.asPrism.getOption(Nationality("British")) shouldBe Some("British")
+      Nationality.textI.asPrism.reverseGet("British") shouldBe Nationality("British")
+      Nationality.textI.asPrism.belowOption.getOption(Some(Nationality("British"))) shouldBe Some(Some("British"))
+      Nationality.textI.asPrism.belowOption.getOption(None) shouldBe Some(None)
+      Nationality.textI.asPrism.belowOption.reverseGet(Some("British")) shouldBe Some(Nationality("British"))
+      Nationality.textI.asPrism.belowOption.reverseGet(None) shouldBe None
+
+      val chained: Prism[Accountant, Option[String]] = Accountant.nationalityI compose Nationality.textI.asPrism.belowOption
+      chained.set(Some("Homeless refugee"))(Accountant(Some(Nationality("British")))) shouldBe Accountant(Some(Nationality("Homeless refugee")))
+      chained.set(Some("Homeless refugee"))(Accountant(None)) shouldBe Accountant(Some(Nationality("Homeless refugee")))
     }
   }
 }
