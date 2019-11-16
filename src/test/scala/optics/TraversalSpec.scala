@@ -8,7 +8,7 @@ import org.scalatest.{Assertion, FreeSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 class TraversalSpec extends FreeSpec with ScalaCheckDrivenPropertyChecks {
-  implicit val arbName = Arbitrary(for{
+  implicit val arbName: Arbitrary[Name] = Arbitrary(for{
     first <- arbitrary[String]
     last <- arbitrary[String]
     nickname <- arbitrary[String]
