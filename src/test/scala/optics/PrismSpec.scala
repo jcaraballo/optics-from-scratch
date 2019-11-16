@@ -5,7 +5,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 case class Nationality(text: String)
 object Nationality {
@@ -30,7 +30,7 @@ object BusinessAccount {
   val companyI: Iso[BusinessAccount, Company] = Iso[BusinessAccount, Company](_.company)(BusinessAccount.apply)
 }
 
-class PrismSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
+class PrismSpec extends FreeSpec with ScalaCheckDrivenPropertyChecks {
 
   private val nationalityGen: Gen[Nationality] = for {
     s ← arbitrary[String]

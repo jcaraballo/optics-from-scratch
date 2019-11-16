@@ -4,7 +4,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 case class EnterpriseAgileId(text: String)
 object EnterpriseAgileId {
@@ -32,7 +32,7 @@ object BusinessNeed {
   val workP: Prism[BusinessNeed, Story] = Prism[BusinessNeed, Story](_.work)(story => BusinessNeed(Some(story)))
 }
 
-class OptionalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
+class OptionalSpec extends FreeSpec with ScalaCheckDrivenPropertyChecks {
   private val enterpriseAgileIdGen: Gen[EnterpriseAgileId] = for {
     s ← arbitrary[String]
   } yield EnterpriseAgileId(s)

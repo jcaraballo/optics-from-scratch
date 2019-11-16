@@ -1,10 +1,10 @@
 package optics
 
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import org.scalacheck.Arbitrary.arbitrary
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 case class EnglishSpanish(englishTerm: String, spanishTerm: String)
 object EnglishSpanish {
@@ -17,7 +17,7 @@ object EnglishSpanish {
     }
 }
 
-class LensSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
+class LensSpec extends FreeSpec with ScalaCheckDrivenPropertyChecks {
   def firstL[A, B]: Lens[(A, B), A] = Lens[(A, B), A](_._1) { case (s, (_, s2)) => (s, s2) }
   def secondL[A, B]: Lens[(A, B), B] = Lens[(A, B), B](_._2) { case (s, (s1, _)) => (s1, s) }
 

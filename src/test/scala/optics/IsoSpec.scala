@@ -4,7 +4,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 case class FamilyName(text: String)
 object FamilyName {
@@ -22,7 +22,7 @@ object Entry {
     Iso[Entry, (String, String)](e => (e.name, e.value)){case (n, v) => Entry(n, v)}
 }
 
-class IsoSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
+class IsoSpec extends FreeSpec with ScalaCheckDrivenPropertyChecks {
   private val familyNameGen: Gen[FamilyName] = for {
     s ← arbitrary[String]
   } yield FamilyName(s)

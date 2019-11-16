@@ -3,11 +3,11 @@ package optics
 import optics.TraversalSpec.Name
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.{Assertion, FreeSpec}
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.Matchers._
+import org.scalatest.{Assertion, FreeSpec}
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class TraversalSpec extends FreeSpec with GeneratorDrivenPropertyChecks {
+class TraversalSpec extends FreeSpec with ScalaCheckDrivenPropertyChecks {
   implicit val arbName = Arbitrary(for{
     first <- arbitrary[String]
     last <- arbitrary[String]
